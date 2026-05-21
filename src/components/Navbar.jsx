@@ -15,6 +15,7 @@ export default function Navbar({ sidebarOpen, setSidebarOpen }) {
   }, [])
 
   const toggleTheme = () => {
+    document.documentElement.classList.add('transitioning')
     const next = !darkMode
     setDarkMode(next)
     if (next) {
@@ -24,6 +25,9 @@ export default function Navbar({ sidebarOpen, setSidebarOpen }) {
       document.documentElement.classList.remove('dark')
       localStorage.setItem('ila_theme', 'light')
     }
+    setTimeout(() => {
+      document.documentElement.classList.remove('transitioning')
+    }, 300)
   }
 
   return (
