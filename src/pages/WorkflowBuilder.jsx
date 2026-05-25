@@ -21,6 +21,7 @@ const MAX_AGENTS = 5
 export default function WorkflowBuilder() {
   const navigate = useNavigate()
   const location = useLocation()
+  const forkedWorkflow = location.state?.forkedWorkflow
   useDocumentTitle('Build a Workflow')
 
   // Pre-populate chain when navigating from a SuggestedChainPills click
@@ -38,15 +39,18 @@ export default function WorkflowBuilder() {
 
   // Pre-select agent if coming from AgentRunner
   useEffect(() => {
-    if (location.state?.preSelectedAgent) {
-      const agent = location.state.preSelectedAgent
-      setSelectedAgents([agent])
-      setTitle(`${agent.name} Workflow`)
-      
-      // Clear location state to prevent re-adding on refresh
-      window.history.replaceState({}, document.title)
-    }
-  }, [location.state])
+  if (forkedWorkflow) {
+    setNodes(
+      JSON.parse(JSON.stringify(forkedWorkflow.nodes || []))
+    )
+
+    setEdges(
+      JSON.parse(JSON.stringify(forkedWorkflow.edges || []))
+    )
+
+    setTitle(`Copy of ${forkedWorkflow.title}`)
+  }
+}, [forkedWorkflow])
 
   // Agents already in the chain — prevent duplicates
   const selectedIds = new Set(selectedAgents.map((a) => a.id))
