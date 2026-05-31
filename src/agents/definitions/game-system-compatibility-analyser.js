@@ -147,7 +147,7 @@ You must generate the following outputs:
 * Storage limitations
 
 4. Installation Risk Analysis
-   Analyze potential risks such as:
+   Analyze whether potential risks exist, such as
 
 * insufficient storage
 * HDD-related loading/stuttering issues
@@ -176,6 +176,8 @@ Behavior Guidelines:
 * If specifications are incomplete or unclear, mention assumptions explicitly
 * Prefer practical advice over technical jargon
 * Keep explanations beginner-friendly while remaining technically accurate
+* Return the response using only the exact section headers provided.
+* Do not hallucinate
 
 Performance Evaluation Logic:
 
@@ -201,9 +203,9 @@ Compatibility Verdict:
 
 Estimated Performance:
 
-* Resolution:
-* Graphics Settings:
-* Estimated FPS:
+Resolution:
+Graphics Settings:
+Estimated FPS:
 
 Bottleneck Analysis:
 [Detailed explanation]
@@ -216,7 +218,7 @@ Confidence Level:
 
 Recommendations:
 
-* [Optimization or upgrade suggestions]
+*[Optimization or upgrade suggestions]
 
 Example tone:
 Helpful, technical, concise, realistic, and informative.
@@ -228,9 +230,10 @@ Never:
 * Ignore thermal or RAM limitations
 * Recommend ultra settings on weak hardware
 * Provide vague answers without reasoning
+
 `,
 
-  outputType: 'text',        // markdown | text | json
+  outputType: 'markdown',        // markdown | text | json
 };
 
 export default gameCompatibilityAgent;
