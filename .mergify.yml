@@ -77,3 +77,63 @@ pull_request_rules:
       label:
         add:
           - needs-fix
+
+  # PR title format check
+  # Flags PRs whose title does not follow the "type: description" convention.
+  # Valid types: feat, fix, docs, style, refactor, test, chore
+  - name: Flag invalid PR title format
+    conditions:
+      - "-title~=^(feat|fix|docs|style|refactor|test|chore)(\\(.+\\))?!?:\\s.+"
+    actions:
+      comment:
+        message: |
+          hey @{{author}}! 👋
+          Your PR title doesn't follow our required format.
+          Please update it to:
+          `type: short description`
+          Valid types: feat, fix, docs, style, refactor, test, chore
+          Example: `feat: add sales discovery agent`
+          — [@AditthyaSS](https://github.com/AditthyaSS)
+      label:
+        add:
+          - needs-fix
+
+  # Empty PR description check
+  # Flags PRs with no description or a description shorter than 20 characters.
+  - name: Flag empty PR description
+    conditions:
+      - "body~=^.{0,19}$"
+    actions:
+      comment:
+        message: |
+          hey @{{author}}! 👋
+          Your PR description is empty.
+          Please add:
+          - What changes you made and why
+          - The issue this PR closes: `Closes #issue_number`
+          - Screenshots if it's a UI change
+          A good description helps us review and merge faster! 🚀
+          — [@AditthyaSS](https://github.com/AditthyaSS)
+      label:
+        add:
+          - needs-fix
+
+  # No linked issue check
+  # Flags PRs that don't reference a closing keyword + issue number in the body.
+  - name: Flag missing linked issue
+    conditions:
+      - "-body~=(?i)(closes?|fixes?|resolves?)\\s+#[0-9]+"
+      - "body~=.{20,}"
+    actions:
+      comment:
+        message: |
+          hey @{{author}}! 👋
+          Your PR doesn't seem to be linked to an issue.
+          Please add this line to your PR description:
+          `Closes #issue_number`
+          Replace issue_number with the actual issue number you are solving.
+          This helps us track what each PR is fixing! 🔗
+          — [@AditthyaSS](https://github.com/AditthyaSS)
+      label:
+        add:
+          - needs-fix
