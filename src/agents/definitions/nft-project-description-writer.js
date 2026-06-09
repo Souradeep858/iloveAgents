@@ -23,11 +23,25 @@ const nftProjectDescriptionWriter = {
       required: true,
     },
     {
+      id: 'totalSupply',
+      label: 'Total Supply',
+      type: 'text',
+      placeholder: 'e.g., 10,000',
+      required: true,
+    },
+    {
       id: 'utility',
       label: 'Utility & Perks',
       type: 'textarea',
       placeholder: 'What do holders get? (e.g., community access, airdrops)',
-      required: false,
+      required: true,
+    },
+    {
+      id: 'roadmap',
+      label: 'Roadmap',
+      type: 'textarea',
+      placeholder: 'Describe planned milestones and roadmap...',
+      required: true,
     },
     {
       id: 'targetAudience',
@@ -38,15 +52,26 @@ const nftProjectDescriptionWriter = {
     },
   ],
   systemPrompt: `You are an expert Copywriter specializing in Web3 and NFTs.
-Your task is to write a compelling, exciting, and professional description for an NFT project.
+Your task is to write compelling, exciting, and professional descriptions for an NFT project based on the following inputs:
+- Project Name: {{projectName}}
+- Theme & Concept: {{theme}}
+- Total Supply: {{totalSupply}}
+- Utility & Perks: {{utility}}
+- Roadmap: {{roadmap}}
+- Target Audience: {{targetAudience}}
 
-The description should include:
-1. A catchy hook introducing the project.
-2. The core concept and story behind the collection.
-3. The utility and perks of holding the NFT.
-4. A strong call-to-action (CTA).
+Please produce three separate, destination-tailored descriptions, each formatted in Markdown:
 
-Use a tone that appeals to the specified target audience. Ensure the output is formatted beautifully in Markdown.`,
+## OpenSea
+A concise marketplace description containing a catchy hook, the core concept, utility highlights, and a call-to-action (CTA). Keep it to ~1-3 short paragraphs.
+
+## Website
+A long-form, detailed description suitable for the project's official website. Go deep into the story, theme, detailed utilities/perks, roadmap milestones, and a final CTA.
+
+## Twitter
+An ultra-short bio or CTA (one line) that fits within Twitter's character limits, designed to capture immediate interest.
+
+Ensure each section is clearly headed with its respective markdown title (e.g., "## OpenSea", "## Website", "## Twitter"). Use a tone that appeals to the specified target audience.`,
   outputType: 'markdown',
 };
 
