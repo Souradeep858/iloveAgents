@@ -58,14 +58,14 @@ useEffect(() => {
     return recentIds
       .map((id) => agents.find((a) => a.id === id))
       .filter(Boolean)
-  }, [])
+  }, [agents])
 
   // Resolve favorite agents (preserving the user's star order)
   const favoriteAgents = useMemo(() => {
     return favorites
       .map((id) => agents.find((a) => a.id === id))
       .filter(Boolean)
-  }, [favorites])
+  }, [favorites, agents])
 
   // Filter agents based on search + category
   const filteredAgents = useMemo(() => {
@@ -82,7 +82,7 @@ useEffect(() => {
         agent.category.toLowerCase().includes(q)
       )
     })
-  }, [searchQuery, selectedCategory])
+  }, [agents, searchQuery, selectedCategory])
 
   const handleRerun = (run) => {
     navigate(`/agent/${run.agentId}`, { state: { prefill: run.inputs } })
@@ -97,11 +97,11 @@ useEffect(() => {
   return (
     <div className="animate-fade-in">
       {/* Hero */}
-      <div className="text-center mb-10 pt-2">
-        <h1 className="text-3xl sm:text-4xl font-bold dark:text-text-primary text-gray-900 mb-3 tracking-tight">
+      <div className="premium-section text-center mb-10 pt-2 overflow-hidden">
+        <h1 className="text-3xl sm:text-4xl font-bold dark:text-text-primary text-gray-900 mb-3 tracking-tight text-balance">
           AI Agents, ready to use.
         </h1>
-        <p className="text-sm dark:text-text-secondary text-gray-500 max-w-md mx-auto leading-relaxed mb-4">
+        <p className="text-sm dark:text-text-secondary text-gray-500 max-w-md mx-auto leading-relaxed mb-4 text-balance">
           Open source. Community-built. Bring your own key.
         </p>
         <button
@@ -117,7 +117,7 @@ useEffect(() => {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-3 gap-3 mb-10 max-w-lg mx-auto">
+      <div className="premium-section grid grid-cols-1 min-[430px]:grid-cols-3 gap-3 mb-10 max-w-lg mx-auto" style={{ animationDelay: '90ms' }}>
         <div className="text-center p-4 rounded-lg border transition-theme
           dark:bg-surface-card dark:border-border bg-white border-gray-200">
           <div className="flex justify-center mb-2">
@@ -160,7 +160,7 @@ useEffect(() => {
 
       {/* ── Favorites Section ── */}
       {favoriteAgents.length > 0 && !showingFiltered && (
-        <div className="mb-8 animate-fade-in">
+        <div className="premium-section mb-8 animate-fade-in" style={{ animationDelay: '140ms' }}>
           <div className="flex items-center gap-2 mb-4">
             <Star size={14} className="text-yellow-400 fill-yellow-400" />
             <h2 className="text-sm font-semibold uppercase tracking-wider dark:text-text-muted text-gray-400">
@@ -185,7 +185,7 @@ useEffect(() => {
       )}
       {/* ── Recently Used Section ── */}
 {recentAgents.length > 0 && !showingFiltered && (
-  <div className="mb-8 animate-fade-in">
+  <div className="premium-section mb-8 animate-fade-in" style={{ animationDelay: '160ms' }}>
     <div className="flex items-center gap-2 mb-4">
       <Heart size={14} className="text-pink-400 fill-pink-400" />
 
@@ -213,7 +213,7 @@ useEffect(() => {
 )}
 
       {/* ── Search & Category Filter Section ── */}
-      <div className="mb-6 space-y-4">
+      <div className="premium-section mb-6 space-y-4" style={{ animationDelay: '180ms' }}>
         {/* Search Bar */}
         <div className="relative max-w-xl mx-auto">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -279,7 +279,7 @@ useEffect(() => {
       </div>
 
       {/* Agent Grid */}
-      <div className="flex flex-col lg:flex-row gap-8 mb-8">
+      <div className="premium-section flex flex-col lg:flex-row gap-8 mb-8" style={{ animationDelay: '220ms' }}>
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold uppercase tracking-wider dark:text-text-muted text-gray-400">
@@ -341,7 +341,7 @@ useEffect(() => {
 
       {/* ── Workflows Section ── */}
       {!showingFiltered && (
-        <div className="mb-8 animate-fade-in">
+        <div className="premium-section mb-8 animate-fade-in" style={{ animationDelay: '260ms' }}>
           <div
             className="rounded-xl border p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4
               dark:bg-surface-card dark:border-border bg-white border-gray-200"
