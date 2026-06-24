@@ -93,9 +93,10 @@ export default function AgentRunner({ agent }) {
   const abortControllerRef = useRef(null);
 
   useKeyboardShortcuts({
-    'Control+Enter': () => {
-      if (canRun() && !loading) handleRun();
-    },
+  'Control+Enter': () => {
+    if (batchMode) return;
+    if (canRun() && !loading) handleRun();
+  },
     'Escape': () => {
       handleClear();
       setPlaygroundOpen(false);
@@ -746,18 +747,6 @@ export default function AgentRunner({ agent }) {
         >
           <RotateCcw size={14} />
           Clear
-        </button>
-
-        {/* Schedule button */}
-        <button
-          onClick={() => setScheduleModalOpen(true)}
-          title="Schedule this agent to run automatically"
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-            dark:text-text-secondary dark:hover:text-text-primary dark:hover:bg-surface-hover
-            text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-        >
-          <CalendarClock size={14} />
-          Schedule
         </button>
 
         {/* Schedule button */}

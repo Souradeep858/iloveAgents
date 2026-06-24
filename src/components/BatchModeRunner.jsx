@@ -11,7 +11,7 @@ import {
   FileText,
 } from 'lucide-react'
 import CustomSelect from './CustomSelect'
-import { runBatch, parsePastedLines, parseCSV, looksLikeHeader } from '../lib/batchRunner'
+import { runBatch, parsePastedLines, parseCSV } from '../lib/batchRunner'
 import { exportBatchAsCSV, exportBatchAsMarkdown } from '../lib/exportBatch'
 
 const STATUS_COLORS = {
@@ -42,7 +42,8 @@ export default function BatchModeRunner({ agent, provider, apiKey, selectedModel
   const [fixedInputs, setFixedInputs] = useState({})
   const [rawPaste, setRawPaste] = useState('')
   const [items, setItems] = useState([]) // string[]
-  const [csvColumns, setCsvColumns] = useState(null) // {headers, rows} when a CSV is uploaded
+  const [csvRawRows, setCsvRawRows] = useState(null) // string[][] from parseCSV, before header decision
+  const [csvHasHeader, setCsvHasHeader] = useState(false)
   const [csvColumnIndex, setCsvColumnIndex] = useState(0)
   const [results, setResults] = useState([]) // [{input, status, output, error}]
   const [running, setRunning] = useState(false)
@@ -56,6 +57,26 @@ export default function BatchModeRunner({ agent, provider, apiKey, selectedModel
     setFixedInputs((prev) => ({ ...prev, [id]: value }))
   }
 
+  // Resolve a fixed field's effective value: explicit user input, else the
+  // field's defaultValue, else a sensible empty value. This matters because
+  // shared fields show their defaultValue in the UI even before the user
+  // touches them — canRun() and the run payload must agree with what's shown.
+  const resolveFixedValue = (input) => {
+    const current = fixedInputs[input.id]
+    if (current !== undefined) return current
+    if (input.defaultValue !== undefined) return input.defaultValue
+    return input.type === 'multiselect' ? [] : ''
+  }
+
+  // Derived view of the CSV: which row is the header (if any), and the data rows
+  const csvHeaders = csvHasHeader ? csvRawRows?.[0] : null
+  const csvDataRows = csvHasHeader ? csvRawRows?.slice(1) : csvRawRows
+
+  const recomputeItemsFromCsv = (rawRows, hasHeader, columnIndex) => {
+    const dataRows = hasHeader ? rawRows.slice(1) : rawRows
+    setItems(dataRows.map((r) => r[columnIndex]).filter(Boolean))
+  }
+
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -65,18 +86,12 @@ export default function BatchModeRunner({ agent, provider, apiKey, selectedModel
       const text = evt.target.result
       if (file.name.toLowerCase().endsWith('.csv')) {
         const parsed = parseCSV(text)
-        if (looksLikeHeader(parsed.headers) && parsed.rows.length > 0) {
-          setCsvColumns(parsed)
-          setCsvColumnIndex(0)
-          setItems(parsed.rows.map((r) => r[0]).filter(Boolean))
-        } else {
-          // Treat as headerless — every row's first cell is an item
-          const allRows = [parsed.headers, ...parsed.rows].filter(Boolean)
-          setCsvColumns(null)
-          setItems(allRows.map((r) => r[0]).filter(Boolean))
-        }
+        setCsvRawRows(parsed.rows)
+        setCsvHasHeader(false) // safe default: never assume a header, never drop the first row
+        setCsvColumnIndex(0)
+        setItems(parsed.rows.map((r) => r[0]).filter(Boolean))
       } else {
-        setCsvColumns(null)
+        setCsvRawRows(null)
         setItems(parsePastedLines(text))
       }
     }
@@ -85,15 +100,23 @@ export default function BatchModeRunner({ agent, provider, apiKey, selectedModel
 
   const handlePasteChange = (val) => {
     setRawPaste(val)
-    setCsvColumns(null)
+    setCsvRawRows(null)
     setItems(parsePastedLines(val))
   }
 
   const handleCsvColumnChange = (indexStr) => {
     const index = Number(indexStr)
     setCsvColumnIndex(index)
-    if (csvColumns) {
-      setItems(csvColumns.rows.map((r) => r[index]).filter(Boolean))
+    if (csvRawRows) {
+      recomputeItemsFromCsv(csvRawRows, csvHasHeader, index)
+    }
+  }
+
+  const handleToggleCsvHeader = () => {
+    const next = !csvHasHeader
+    setCsvHasHeader(next)
+    if (csvRawRows) {
+      recomputeItemsFromCsv(csvRawRows, next, csvColumnIndex)
     }
   }
 
@@ -102,7 +125,7 @@ export default function BatchModeRunner({ agent, provider, apiKey, selectedModel
     return agent.inputs
       .filter((i) => i.required && i.id !== batchFieldId)
       .every((i) => {
-        const v = fixedInputs[i.id]
+        const v = resolveFixedValue(i)
         if (Array.isArray(v)) return v.length > 0
         return v && String(v).trim() !== ''
       })
@@ -120,11 +143,17 @@ export default function BatchModeRunner({ agent, provider, apiKey, selectedModel
       setResults((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)))
     }
 
+    // Include resolved defaults for any fixed field the user never touched,
+    // so the run payload matches what's actually shown in the UI.
+    const mergedFixedInputs = Object.fromEntries(
+      otherFields.map((input) => [input.id, resolveFixedValue(input)])
+    )
+
     try {
       await runBatch({
         items,
         agent,
-        fixedInputs,
+        fixedInputs: mergedFixedInputs,
         batchFieldId,
         provider,
         model: selectedModel,
@@ -219,10 +248,23 @@ export default function BatchModeRunner({ agent, provider, apiKey, selectedModel
                     )
                   })}
                 </div>
+              ) : input.type === 'textarea' || input.type === 'code' ? (
+                <textarea
+                  value={fixedInputs[input.id] ?? input.defaultValue ?? ''}
+                  onChange={(e) => updateFixedInput(input.id, e.target.value)}
+                  placeholder={input.placeholder}
+                  rows={input.type === 'code' ? 8 : 4}
+                  spellCheck={input.type !== 'code'}
+                  className={`w-full px-3 py-2 rounded-md text-sm transition-colors resize-y
+                    dark:bg-surface-input dark:border-border dark:text-text-primary
+                    bg-white border border-gray-200 text-gray-900
+                    focus:ring-1 focus:ring-accent focus:border-accent outline-none
+                    ${input.type === 'code' ? 'font-mono' : ''}`}
+                />
               ) : (
                 <input
                   type="text"
-                  value={fixedInputs[input.id] || ''}
+                  value={fixedInputs[input.id] ?? input.defaultValue ?? ''}
                   onChange={(e) => updateFixedInput(input.id, e.target.value)}
                   placeholder={input.placeholder}
                   className="w-full h-9 px-3 rounded-md text-sm transition-colors
@@ -279,16 +321,34 @@ export default function BatchModeRunner({ agent, provider, apiKey, selectedModel
           )}
         </div>
 
-        {/* Column picker for CSVs with headers */}
-        {csvColumns && (
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-[11px] dark:text-text-muted text-gray-400">Use column:</span>
-            <CustomSelect
-              value={String(csvColumnIndex)}
-              onChange={handleCsvColumnChange}
-              options={csvColumns.headers.map((h, i) => ({ value: String(i), label: h }))}
-              triggerClassName="h-7 text-xs"
-            />
+        {/* Header confirmation + column picker for uploaded CSVs */}
+        {csvRawRows && csvRawRows[0]?.length > 1 && (
+          <div className="mt-2 space-y-2">
+            <label className="flex items-center gap-2 text-[11px] dark:text-text-secondary text-gray-500 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={csvHasHeader}
+                onChange={handleToggleCsvHeader}
+                className="accent-accent"
+              />
+              First row is a header (not a data item)
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] dark:text-text-muted text-gray-400">Use column:</span>
+              <CustomSelect
+                value={String(csvColumnIndex)}
+                onChange={handleCsvColumnChange}
+                options={
+                  csvHasHeader
+                    ? csvHeaders.map((h, i) => ({ value: String(i), label: h || `Column ${i + 1}` }))
+                    : csvRawRows[0].map((_, i) => ({ value: String(i), label: `Column ${i + 1}` }))
+                }
+                triggerClassName="h-7 text-xs"
+              />
+            </div>
+            <p className="text-[10px] dark:text-text-muted text-gray-400">
+              {csvDataRows?.length || 0} row{csvDataRows?.length !== 1 ? 's' : ''} will be used as batch items.
+            </p>
           </div>
         )}
       </div>

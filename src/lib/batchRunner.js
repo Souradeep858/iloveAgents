@@ -65,25 +65,28 @@ export function parseCSV(text) {
     }
   }
 
-  // Final field/row if file doesn't end with newline
   if (field.length > 0 || row.length > 0) {
     pushRow()
   }
 
   const nonEmptyRows = rows.filter((r) => r.some((cell) => cell.trim() !== ''))
-  if (nonEmptyRows.length === 0) return { headers: null, rows: [] }
-
-  return { headers: nonEmptyRows[0], rows: nonEmptyRows.slice(1) }
+  return { rows: nonEmptyRows }
 }
 
 /**
  * Detect whether a parsed CSV's first row looks like a header
  * (heuristic: no purely numeric-looking cells, reasonably short).
  */
-export function looksLikeHeader(firstRow) {
-  if (!firstRow) return false
-  return firstRow.every((cell) => cell.trim().length > 0 && cell.trim().length < 80)
-}
+
+/**
+ * NOTE: We deliberately do NOT try to auto-detect whether a CSV's first
+ * row is a header by inspecting its content. Free-text items (e.g. a
+ * resume snippet like "Doe, Jane - Software Engineer") are indistinguishable
+ * from a genuine header row using any content heuristic, and guessing wrong
+ * silently drops the first real item. Instead, the UI always shows the user
+ * the parsed first row and lets them confirm whether to treat it as a
+ * header — see the "First row is a header" toggle in BatchModeRunner.
+ */
 
 /**
  * Build the full user message for one batch item, substituting the
